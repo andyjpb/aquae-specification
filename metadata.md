@@ -49,7 +49,7 @@
         Question question = 4;
         Answer answer = 5;
         UnencryptedIdentity uid = 6;
-        EncryptedIdentity eid = 7;
+        EncryptedIdentity eid = 7; // eid doesn't look very nice in the txt file
         ConfidenceAttributes con = 8;
         // TODO: do we need both identity fields?
       }
@@ -61,7 +61,7 @@
       optional Validity validity = 3;
       optional string scope = 4;
       optional string legalBasis = 5;
-      oneof requiredPermission {
+      oneof requiredPermission { // How do we make this oneof-required?
         ConsentRequirement consent = 6;
         OnDemandRequirement onDemand = 7;
         TransparencyRequirement transparency = 8;
