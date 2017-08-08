@@ -19,6 +19,9 @@ mrproper: clean
 	rm -fr test.*/
 
 
+%.html: %.md
+	markdown $< > $@
+
 %.proto : %.md
 	./md2protobuf $< $@
 
