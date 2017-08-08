@@ -70,6 +70,8 @@
 
         For Windows systems, the tools require PowerShell, which is availble by
         default in Windows 10 or from http://msdn.microsoft.com/en-us/powershell.
+#TODO: Mention protobuf tools.
+# Debian: protobuf-compiler libprotobuf-java python-protobuf
 
 
  3. Usage
