@@ -127,7 +127,7 @@
     message Node {
       optional string name = 1; // Can be any valid UTF-8 string.
       optional Endpoint location = 2;
-      optional bytes certificate = 3; // X509 certificate in DER format
+      optional bytes certificate = 3; // X509 certificate in DER format. Must not be the same as any other node's publicKey.
     }
 
     message ConfidenceAttribute {
