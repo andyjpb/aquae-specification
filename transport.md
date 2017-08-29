@@ -38,6 +38,7 @@ The [Messaging Protocol](./messaging.md) is composed of messages specified using
    ```protobuf
    message Header {
 	   enum Type {
+		   // TODO: check what happens when the message contains an invalid value for this field. Does it end up as the first one? Do we need a sentinel for that? The generated java code seems to set hasType() only if there is a valid value on the wire. Otherwise, it puts it in the unknown fields section. In the Java implemention we assume that we can internalise using the ordinal values which means that we ignore the actual field values specified here. We could start these values from 0, or give them non consecutive numbers but we need to be careful with that if we're using ordinal-mapping rather than value-mapping in the implementations.
 		   IDENTITY_SIGN_REQUEST = 1;
 		   // FIXME: Where is the response to IDENTITY_SIGN_REQUEST?
 		   SIGNED_QUERY          = 2;
