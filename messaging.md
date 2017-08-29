@@ -79,38 +79,9 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
     // TODO: identity of the service making the request
   }
 
-  message RedactableString {
-    message RealValue {
-      optional uint32 salt = 1;
-      optional string value = 2;
-    }
-
-    message EncryptedValue {
-      optional bytes hash = 1;
-      optional bytes blob = 2;
-    }
-
-    oneof field {
-      bytes hash = 1;
-      RealValue value = 2;
-      EncryptedValue encrypted = 3;
-    }
-  }
-
-  message RedactableIdentity {
-    optional RedactableString surname = 1;
-    optional RedactableString postcode = 2;
-    optional RedactableString birthYear = 3;
-    optional RedactableString initials = 4; // Initials in little endian Western order
-    optional RedactableString houseNumber = 6;
-    optional RedactableString dateOfBirth = 7; // As an RFC-3339 date
-  }
-
   message SignedIdentity { // is this the IdentitySignResponse?
-    optional RedactableIdentity identity = 1;
-    optional bytes rootHash = 2;
-    optional bytes signatureOfHash = 3;
-    map<string, bytes> nodeKeys = 4;
+    // TODO: unecrpyted container containing Redactable<T> fields
+    // ID bridge cannot leave fields empty -> all are required
   }
   ```
 
