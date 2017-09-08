@@ -110,7 +110,7 @@
 
     message ImplementingNode {
       optional string name = 1;
-      optional MatchingSpec matching_requirements = 2; // Can be empty
+      optional MatchingSpec matching_requirements = 2; // Can be empty. Should this be repeated? What happens if you specify two ImplementingNode sections with different matching requirements?
     }
 
     ```
