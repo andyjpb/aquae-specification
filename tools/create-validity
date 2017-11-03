@@ -22,7 +22,8 @@ die() {
 }
 
 fmt_date() {
-	date --date=@$@ -u '+%Y-%m-%dT%H:%M:%SZ'
+	DATE_OPT=$(if [ "%`uname`%" = "%MacOS%" ]; then echo "-r"; else echo "--date=@"; fi)
+	date ${DATE_OPT}$@ -u '+%Y-%m-%dT%H:%M:%SZ'
 }
 
 
