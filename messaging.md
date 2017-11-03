@@ -79,9 +79,9 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
     // TODO: identity of the service making the request
   }
 
-  message SignedIdentity {
-    optional PersonIdentity identity = 1;
-    // TODO: add signature info and merkel tree
+  message SignedIdentity { // is this the IdentitySignResponse?
+    // TODO: unecrpyted container containing Redactable<T> fields
+    // ID bridge cannot leave fields empty -> all are required
   }
   ```
 
