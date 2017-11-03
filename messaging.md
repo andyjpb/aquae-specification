@@ -85,7 +85,7 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
   }
   ```
 
-4. The node creates a payload containing the query to be run and the signed identity, and submits it to a consent service listed in the metadata file. The consent service signs the scope if it's conditions are met or a `BadQueryResponse` if not. The query servers then satisfy themselves that the query being asked of them makes sense within that scope.
+4. The node creates a Bindings message, which links a QueryPlan with some signed identity data, and submits it to a consent service listed in the metadata file. The consent service signs the bindings if its conditions are met or a `BadQueryResponse` if not. The query servers then satisfy themselves that the query being asked of them makes sense within the context of those Bindings.
 
     1. The consent service checks that the query is allowed to be asked for this subject now. How it does this is implementation-dependent, but a scheme which asks the subject for their permission or requires an agent to assert they have gained permission is the intention. TODO more?
 
@@ -97,36 +97,57 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
     }
     */
 
-    message Question {
-      optional string name = 1;
-      // repeated Param inputs = 2; TODO: way of expressing this TBC
-      optional string dsaId = 9; // TODO: interesting that this has ended up here. is it a dragon?
+    // A QueryPlan is the name of the Query to answer and the Required Queries from the Choice that was chosen by the user for that Query.
+    // If the Query has no Choices to choose from then required_query is omitted.
+    // TODO: This structure should be redactable.
+    //
+    // We don't currently provide any support for the following things:
+    //
+    //   + Multiple implementing nodes for a query.
+    //     We assume that all implementations are equivalent.
+    //
+    //   + Clustered nodes.
+    //     We assume that all implementating nodes share a strongly consistent view of which Querys the others have run such that replay attacks are not possible.
+    //
+    //   + Multiple matching requirements for an implementing node for a query.
+    //     When checking identity attributes (from PersonIdentity), if the consent service calculates that there is more information exposed than required or allowed by the matching requirements, then it should raise an error and refuse to sign the bindings.
+    //
+    //   + Redacting parts of the query plan that the next hop node does not need to see.
+    //     All nodes involved in the query are allowed to see the entire QueryPlan before and after them.
+    //
+    // We require that implementing nodes keep track of transaction-ids, query-ids and nOnce such that each node in the QueryPlan for a given set of Bindings is never allowed to execute more than once.
+    // Having answered a query, we do not currently require implementing nodes to be able to provide a cached answer in the event that an upstream node fails and subsequently requires to know the result of a Query that it was already given.
+
+    message QueryPlan {
+      optional string    query_name     = 1;
+      optional string    node_name      = 2;
+      repeated QueryPlan required_query = 3;
     }
 
-    message Choice {
-      repeated string requiredQuery = 1;
+    // A top-level query is answered by a transaction that answers it and all the dependent queries.
+    // The work required of a transaction is described by binding a bunch of information together as set out below.
+    // The Bindings are the description that the consent server signs.
+    // The transaction-id is the digest of the bindings. TODO: algorithm.
+    message Bindings {
+      optional bytes nOnce = 2; // Monotonically increasing value set by CS
+      optional string scope = 9;
+      optional SignedIdentity subjectIdentity = 3;
+      optional PersonIdentity delegateIdentity = 4;
+      optional AgentIdentity agentIdentity = 5;
+      optional ServiceIdentity serviceIdentity = 6;
+      optional QueryPlan plan = 8;
     }
 
-    message Query {
-      optional Question question = 1;
-      optional bytes queryId = 2;
-      optional SignedScope scope = 3;
+    message SignedBindings {
+      optional Bindings bindings = 1;
+      optional bytes signature = 2;
+    }
 
-      // The transaction-id of the scope is the digest. TODO: algorithm.
-      message Scope {
-        optional Question originalQuestion = 1;
-        optional bytes nOnce = 2; // Monotonically increasing value set by CS
-        optional SignedIdentity subjectIdentity = 3;
-        optional PersonIdentity delegateIdentity = 4;
-        optional AgentIdentity agentIdentity = 5;
-        optional ServiceIdentity serviceIdentity = 6;
-        repeated Choice choice = 7;
-      }
-
-      message SignedScope {
-        optional Scope scope = 1;
-        optional bytes signature = 2;
-      }
+    // A Query is the query from the plan that is actually being asked together with its parameters.
+    // query_id is the postorder index of the query in the query plan.
+    message PrepareQuery {
+      optional SignedBindings bindings = 1;
+      optional bytes query_id = 2;
     }
 
     /* The pattern for redactable data structures is:
@@ -157,22 +178,20 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
       optional map<string, bytes> nodeKeys = 4;
     }
     */
-
-    message SignedQuery {
-      optional Query query = 1;
-      optional bytes signature = 2;
-    }
     ```
 
-5. The sending node sends the signed query to the first hop node.
+5. The sending node sends a `PrepareQuery` message to the first hop node.
 
     1. The sending node should redact the identity fields that are optional using the object hashing method TODO: what is the object hashing method. c.f. Ben Laurie who is well known.
 
-5. The receiving node checks the query is valid using it's metadata file. If it is invalid, it returns a `BadQuery` response. Receiving nodes should check that:
+   The receiving node checks the query is valid using it's metadata file. If it is invalid, it returns a `BadQuery` response. Receiving nodes should check that:
 
     0. The metadata versions are the same
     1. It can answer the query
-    2. The sending node (service) has authorization to ask that query (by checking the permissions/DSA) TODO: work out how to do same department permissions vs cross-department DSAs. "Smart nodes" e.g. proxies need permissions that are not listed in the metadata, pairs of nodes in metadata can use DSAs
+      1. The node uses the `query_id` to find the Query that it is being asked to execute in the QueryPlan.
+      2. The node finds the QuerySpec named in the QueryPlan in its Metadata.
+      3. The node checks that the `required_query` list in the QueryPlan satisfies at least one Choice for the QuerySpec in the Metadata.
+    2. The sending node (service) has authorization to ask that query (by checking the permissions/DSA) TODO: work out how to do same department permissions vs cross-department DSAs. "Smart nodes" e.g. proxies need permissions that are not listed in the metadata, pairs of nodes in metadata can use DSAs. At this stage the receiving node just checks that there is a DSA in scope that allows the sending node to pose this Query at all. In later stages we will check that the Query arguments / inputs also satisfy the DSA.
     3. The query is allowed to be run for this subject (by checking the appropriate consent server authorisation)
     4. No checks are made on the agent and delegate identities (this is handled by the consent server)
     6. The identity has been encrypted for the all the nodes that will need it (and not more)
@@ -193,24 +212,25 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
         MissingIdentityFields = 8;
       } // TODO: NCSC: how detailed is this in non-debug?
 
-      optional bytes queryId = 1;
+      optional bytes query_id = 1;
       optional Reason reason = 2;
     }
     ```
 
+    If the `PrepareQuery` message is successful, the receiving node should proceed with the following steps. At this stage it is not necessary to reply to the sending node.
+
 6. The receiving node starts preparing the query.
 
-    1. If it encouters a peice of data that is required from another node, it forms a `Query` payload of it's own and submits that to the next node.
+    1. The node constructs and sends `PrepareQuery` messages for each of the `required_query` entries from the QueryPlan. i.e. it conducts Step 5 for all the `required_query` entries, sending the messages to the next hop node.
 
-        1. The `name` and `inputs` are defined by whatever information it needs from the next node. The `dsaId` is picked from the metadata based on the `scope`.
-        2. The `scope` is copied from the previous query.
-        3. The `queryId` is a unique id that identifies the conversation between two nodes (as distinct from the transaction-id, which identifies all the conversations answering the highest-level question).
+        1. The `query_id` is defined by whatever information it needs from the next node.
+        2. The `bindings` are copied from the running query.
 
-    2. If it encounters a peice of data that is required from a database it has access to, it decrypts and attempts to match the `subjectIdentity` to it's database. This process is implementation-dependent.
+    3. If the metadata indicates that the node would be required to set up a match in order to answer the Query then it decrypts and attempts to match the `subjectIdentity` to it's database. This process is implementation-dependent.
 
     ```protobuf
     message QueryResponse {
-      optional bytes queryId = 1;
+      optional bytes query_id = 1;
       oneof result {
         MoreIdentityResponse moreIdentityResponse = 3;
         MatchCompleteResponse matchCompleteResponse = 4;
@@ -236,32 +256,42 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
 
       ```protobuf
       message MatchCompleteResponse {
-      }
+	      optional bytes query_id = 1;
+      } // TODO: Signing
       ```
+
+      TODO: MatchCompleteResponse is sent when a matching node has identified zero or one records. However, what happens when it has consumed all the identity data and cannot identify a single record? Will it still send MoreIdentityResponse when it knows that it has used up all the redacted data? Whether or not this lack of match is a problem depends on the business logic of the actual question. Who decides whether to proceed with the next stage and how do they signal it?
+
+    Servers that do not do matching do not need to generate a MatchCompleteResponse.
 
     Intermediate servers must pass through the encrypted responses to the origin node.
 
-7. If any of the nodes return a `MoreIdentityResponse`, the SP must resubmit the `Query` message with unredacted identity fields.
+    Servers that do not do matching MUST ensure that all MatchCompleteRepsonses from their downstream nodes have finished passing to the origin node in a timely fashion after having receieved MatchCompleteResponses from all their downstream nodes.
 
-    1. The identity message must contain exactly the fields it did previously along with every field that was additionally requested by  one or more nodes.
+7. If any of the nodes return a `MoreIdentityResponse`, the SP must resubmit the `PrepareQuery` message with unredacted identity fields.
+
+    When this occurs nodes may be keeping track of intermediate state. They are allowed to reuse this state but the message flow between them must proceed as if from Step 5 but with the extra identity data present.
+
+    1. The identity message must contain exactly the fields it did previously along with every field that was additionally requested by one or more nodes.
     2. The same set of fields must be sent to each node.
 
-7. When the origin node has received responses from all of the identity nodes, it sends a `SecondWhistle` message along the query path to tell the query servers to begin executing the query logic against the data from the matched records. Once the `SecondWhilste` has been processed, the node can finalise the transaction and clear resources - no further messages for this `queryId` are permitted.
+8. When the origin node has received `MatchCompleteResponse`s from all of the identity nodes, it sends a `SecondWhistle` message along the query path to tell the query servers to begin executing the query logic against the data from the matched records. Once the `SecondWhistle` has been processed, the node can finalise the transaction and clear resources - no further messages for this `query_id` are permitted.
 
     ```protobuf
     message SecondWhistle {
-      optional bytes queryId = 1;
+      optional bytes query_id = 1;
+      //repeated Param inputs   = 3; //TODO: way of expressing this TBC
       // TODO: how do we ensure this comes from the SP??
     }
     ```
 
 8. The nodes on the query path execute the query logic.
 
-    1. If the node requires data from another node, it passes on the `SecondWhistle` message to that node and awaits the `QueryAnswer`. It is up to the node when and if it actually forwards the `SecondWhistle` message (for instance, it may concurrently request all data or it may wait until it has evaluated earlier branches in an OR-type condition). It should only send the `SecondWhistle` if it requires the data.
+    1. If the node requires data from another node, it creates its own `SecondWhistle` message, sends it to that node and awaits the `QueryAnswer`. It is up to the node when and if it actually forwards the `SecondWhistle` message however, it MUST NOT send the `SecondWhistle` message if it does not actually need to use the data to execute the query logic.
 
         ```protobuf
         message QueryAnswer {
-          optional bytes queryId = 1;
+          optional bytes query_id = 1;
           oneof result {
             ValueResponse value = 2;
             ErrorResponse error = 3;
@@ -290,8 +320,9 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
 
         ```protobuf
         message Finish {
-          optional bytes queryId = 1;
+          optional bytes query_id = 1;
         }
         ```
 
 9. That's it.
+
