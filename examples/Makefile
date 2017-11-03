@@ -15,6 +15,8 @@ mrproper: clean
 ## Key & Certificate Creation Rules
 %.key:
 	openssl genpkey -out $@ -outform PEM -algorithm rsa -pkeyopt rsa_keygen_bits:4096
+#openssl rsa -in b.pem -outform PEM 4096
+#openssl pkcs8 -topk8 -nocrypt -in b
 
 %.csr: %.key
 	openssl req -outform PEM -out $@ -new -subj "/CN=$*" -key $< -keyform PEM -sha256 -batch -verbose
