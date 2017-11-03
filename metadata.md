@@ -18,13 +18,13 @@
 
     ```protobuf
     message Validity {
-      optional string version = 1;
-      optional string validFrom = 2; // string of RFC-3339
-      optional string validTo = 3;
+      optional string version    = 1;
+      optional string valid_from = 2; // string of RFC-3339
+      optional string valid_to   = 3;
     }
 
     message Endpoint {
-      optional string hostname = 1; // must be a domain name, a dotted quad IPv4 or an IPv6 enclosed in square brackets.
+      optional string hostname    = 1; // must be a domain name, a dotted quad IPv4 or an IPv6 enclosed in square brackets.
       optional int32  port_number = 2;
     }
 
@@ -36,38 +36,38 @@
 
     // Is the relationship between SP <-> QS and QS <-> DA the same DSA? Or do you need one each?
     message SharingLink {
-      optional string nodeFrom = 2;
-      optional string nodeTo = 3;
+      optional string node_from       = 2;
+      optional string node_to         = 3;
 
-      message Question { optional string queryName = 1; } // TODO: query params should NOT contain PII
-      message Answer { optional string queryName = 1; } // TODO: return values should be in here
-      message UnencryptedIdentity { repeated MatchingSpec.IdFields identityFields = 1; }
-      message EncryptedIdentity { }
-      message ConfidenceAttributes { repeated string types = 1; }
+      message Question             { optional string                query_name      = 1; } // TODO: query params should NOT contain PII
+      message Answer               { optional string                query_name      = 1; } // TODO: return values should be in here
+      message UnencryptedIdentity  { repeated MatchingSpec.IdFields identity_fields = 1; }
+      message EncryptedIdentity    { }
+      message ConfidenceAttributes { repeated string                types           = 1; }
 
       oneof what {
-        Question question = 4;
-        Answer answer = 5;
-        UnencryptedIdentity uid = 6;
-        EncryptedIdentity eid = 7;
-        ConfidenceAttributes con = 8;
+        Question             question = 4;
+        Answer               answer   = 5;
+        UnencryptedIdentity  uid      = 6;
+        EncryptedIdentity    eid      = 7;
+        ConfidenceAttributes con      = 8;
         // TODO: do we need both identity fields?
       }
     }
 
     message DSA {
-      repeated SharingLink link = 1;
-      optional string justification = 2; // TODO be more clear about what this is
-      optional Validity validity = 3;
-      optional string scope = 4;
-      optional string legalBasis = 5;
+      repeated SharingLink link              = 1;
+      optional string       justification    = 2; // TODO be more clear about what this is
+      optional Validity     validity         = 3;
+      optional string       scope            = 4;
+      optional string       legalBasis       = 5;
       oneof requiredPermission {
-        ConsentRequirement consent = 6;
-        OnDemandRequirement onDemand = 7;
+        ConsentRequirement      consent      = 6;
+        OnDemandRequirement     onDemand     = 7;
         TransparencyRequirement transparency = 8;
       }
       oneof recurrance {
-        DoesNotRecur oneShot = 9;
+        DoesNotRecur oneShot                 = 9;
       }
 
       message DoesNotRecur {
@@ -75,65 +75,65 @@
 
       message ConsentRequirement {
         // Requires user to give explicit consent through a consent server
-        optional Endpoint consentServer = 1;
+        optional Endpoint consent_server = 1;
       }
       message OnDemandRequirement {
         // SP can execute query when other business process dictate that it's required (i.e. legacy form, user unaware of Aquae)
       }
       message TransparencyRequirement {
         // Requires user to have seen the query plan and a record of this from consent/transparency server
-        optional Endpoint transparencyServer = 1; // TODO: node name
+        optional Endpoint transparency_server = 1; // TODO: node name
       }
     }
 
     // TODO: Query contains the identity/confidence attributes, parameters, return values
     message QuerySpec {
-      optional string name = 1;
-      repeated ImplementingNode node = 2;
-      repeated Choice choice = 3;
+      optional string           name   = 1;
+      repeated ImplementingNode node   = 2;
+      repeated Choice           choice = 3;
     }
 
     message MatchingSpec {
       enum IdFields {
-        SURNAME = 1;
-        POSTCODE = 2;
+        SURNAME       = 1;
+        POSTCODE      = 2;
         YEAR_OF_BIRTH = 3;
-        INITIALS = 4;
-        HOUSE_NUMBER = 6;
+        INITIALS      = 4;
+        HOUSE_NUMBER  = 6;
         DATE_OF_BIRTH = 7;
       }
 
-      repeated IdFields required = 1;
-      repeated IdFields disambiguators = 2;
-      repeated string confidenceBuilders = 3;
+      repeated IdFields required             = 1;
+      repeated IdFields disambiguators       = 2;
+      repeated string   confidence_builders  = 3;
     }
 
     message ImplementingNode {
-      optional string nodeId = 1;
-      optional MatchingSpec matchingRequirements = 2; // Can be empty
+      optional string       node_id               = 1;
+      optional MatchingSpec matching_requirements = 2; // Can be empty
     }
 
     message Choice {
-      repeated string requiredQuery = 1;
+      repeated string required_query = 1;
     }
 
     message Node {
-      optional string name = 1; // Can be any valid UTF-8 string.
-      optional Endpoint location = 2;
-      optional bytes certificate = 3; // X509 certificate in DER format
+      optional string   name        = 1; // Can be any valid UTF-8 string.
+      optional Endpoint location    = 2;
+      optional bytes    certificate = 3; // X509 certificate in DER format
     }
 
     message ConfidenceAttribute {
-      optional string name = 1;
+      optional string name        = 1;
       optional string description = 2;
       // TODO: confirm if type model is required
     }
 
     message Federation {
-      optional Validity validity = 1;
-      repeated Node node = 2;
-      repeated DSA agreement = 3;
-      repeated QuerySpec query = 4;
+      optional Validity            validity            = 1;
+      repeated Node                node                = 2;
+      repeated DSA                 agreement           = 3;
+      repeated QuerySpec           query               = 4;
       repeated ConfidenceAttribute confidenceAttribute = 5;
     }
     ```

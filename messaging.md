@@ -57,18 +57,18 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
 
   ```protobuf
   message IdentitySignRequest {
-    optional PersonIdentity subjectIdentity = 1;
+    optional PersonIdentity subject_identity   = 1;
     // TODO: also need to send the query that we want to run. Then identity bridge verifies.
-    repeated string identitySetNodes = 2;
+    repeated string         identity_set_nodes = 2;
   }
 
   message PersonIdentity {
-    optional string surname = 1;
-    optional string postcode = 2;
-    optional int32  birthYear = 3;
-    optional string initials = 4; // Initials in little endian Western order
-    optional string houseNumber = 6;
-    optional string dateOfBirth = 7; // As an RFC-3339 date
+    optional string surname       = 1;
+    optional string postcode      = 2;
+    optional int32  birth_year    = 3;
+    optional string initials      = 4; // Initials in little endian Western order
+    optional string house_number  = 6;
+    optional string date_of_birth = 7; // As an RFC-3339 date
   }
 
   message AgentIdentity {
@@ -92,7 +92,7 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
     ```protobuf
     /* The pattern for signed messages is:
     message Signed<T> {
-      optional T payload = 1;
+      optional T     payload   = 1;
       optional bytes signature = 2;
     }
     */
@@ -129,32 +129,32 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
     // The Bindings are the description that the consent server signs.
     // The transaction-id is the digest of the bindings. TODO: algorithm.
     message Bindings {
-      optional bytes nOnce = 2; // Monotonically increasing value set by CS
-      optional string scope = 9;
-      optional SignedIdentity subjectIdentity = 3;
-      optional PersonIdentity delegateIdentity = 4;
-      optional AgentIdentity agentIdentity = 5;
-      optional ServiceIdentity serviceIdentity = 6;
-      optional QueryPlan plan = 8;
+      optional bytes           nOnce            = 2; // Monotonically increasing value set by CS
+      optional string          scope            = 9;
+      optional SignedIdentity  subjectIdentity  = 3;
+      optional PersonIdentity  delegateIdentity = 4;
+      optional AgentIdentity   agentIdentity    = 5;
+      optional ServiceIdentity serviceIdentity  = 6;
+      optional QueryPlan       plan             = 8;
     }
 
     message SignedBindings {
-      optional Bindings bindings = 1;
-      optional bytes signature = 2;
+      optional Bindings bindings  = 1;
+      optional bytes    signature = 2;
     }
 
     // A Query is the query from the plan that is actually being asked together with its parameters.
     // query_id is the postorder index of the query in the query plan.
     message PrepareQuery {
       optional SignedBindings bindings = 1;
-      optional bytes query_id = 2;
+      optional bytes          query_id = 2;
     }
 
     /* The pattern for redactable data structures is:
     message Redactable<T> {
       message RealValue {
-        optional int salt = 1;
-        optional T value = 2;
+        optional int salt  = 1;
+        optional T   value = 2;
       }
 
       message EncryptedValue {
@@ -163,8 +163,8 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
       }
 
       oneof {
-        optional bytes hash = 1;
-        optional RealValue value = 2;
+        optional bytes          hash      = 1;
+        optional RealValue      value     = 2;
         optional EncryptedValue encrypted = 3;
       }
     }
@@ -172,10 +172,10 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
 
     /* The pattern for redactable containers is:
     message RedactableContainer<T> {
-      optional T message = 1;
-      optional bytes rootHash = 2;
-      optional bytes signatureOfHash = 3;
-      optional map<string, bytes> nodeKeys = 4;
+      optional T                  message         = 1;
+      optional bytes              rootHash        = 2;
+      optional bytes              signatureOfHash = 3;
+      optional map<string, bytes> nodeKeys        = 4;
     }
     */
     ```
@@ -201,19 +201,19 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
     ```protobuf
     message BadQueryResponse {
       enum Reason {
-        StaleMetadata = 0;
-        CannotAnswerQuery = 1;
-        ServiceUnauthorized = 2;
-        NoConsentToken = 3;
-        AgentUnauthorized = 4;
-        DelegateUnauthorized = 5;
-        MissingIdentity = 6;
-        IdentityTooOpen = 7;
-        MissingIdentityFields = 8;
+        STALE_METADATA          = 0;
+        CANNOT_ANSWER_QUERY     = 1;
+        SERVICE_UNAUTHORIZED    = 2;
+        NO_CONSENT_TOKEN        = 3;
+        AGENT_UNAUTHORIZED      = 4;
+        DELEGATE_UNAUTHORIZED   = 5;
+        MISSING_IDENTITY        = 6;
+        IDENTITY_TOO_OPEN       = 7;
+        MISSING_IDENTITY_FIELDS = 8;
       } // TODO: NCSC: how detailed is this in non-debug?
 
-      optional bytes query_id = 1;
-      optional Reason reason = 2;
+      optional bytes  query_id = 1;
+      optional Reason reason   = 2;
     }
     ```
 
@@ -232,8 +232,8 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
     message QueryResponse {
       optional bytes query_id = 1;
       oneof result {
-        MoreIdentityResponse moreIdentityResponse = 3;
-        MatchCompleteResponse matchCompleteResponse = 4;
+        MoreIdentityResponse  more_identity_response  = 3;
+        MatchCompleteResponse match_complete_response = 4;
       }
     }
     ```
@@ -293,8 +293,8 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
         message QueryAnswer {
           optional bytes query_id = 1;
           oneof result {
-            ValueResponse value = 2;
-            ErrorResponse error = 3;
+            ValueResponse value  = 2;
+            ErrorResponse error  = 3;
           }
         }
         ```
