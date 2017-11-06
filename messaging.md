@@ -45,15 +45,15 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
     2. If the chosen node has a `MatchingSpec` requirement, the answering node is added to the identity set.
     3. The node looks up which subsequent questions must be answered to formulate the answer by examining the `requiredQuery` fields.
     4. Steps 1-3 are repeated until the query has been fully resolved and there are no further required queries. (It is up to the implementation to detect and prevent infinite loops but a correct parse of the Metadata will ensure this.) The node now has a set of nodes which will require the subject identity. TODO: need to resolve the `Choices` of the lower level questions too. How do we present these to the user?
-    5. The node looks up the matching requirement entries for the identity set nodes and computes any fields marked as `disambiguating` that are shared by two or more nodes. The node must submit these fields to all DAs that support them to ensure matching consistency (these fields are then considered `required`).
+    5. The node looks up the matching requirement entries for the identity set nodes and computes any fields marked as `disambiguating` that are shared by two or more nodes. The node must submit these fields to all matching nodess that support them to ensure matching consistency (these fields are then considered `required`).
     6. The node then has both the fields required and fields that may subsequently be used for disambiguation or confidence-building for matching (the "match target").
 
-2. The node collects the data required by the identity set nodes. DA must match using all fields that are sent, even if it doesn't think it requires them.
+2. The node collects the data required by the identity set nodes. Matching node must match using all fields that are sent, even if it doesn't think it requires them.
 
     0. TODO: nodes should receive the mininum amount of data required to do their job. When a node operates, it should use all the data it was given to verify as much correctness as possible.
     1. It is up to the node to decide what user interface is used and which fields are asked up front. The required fields are the minimum set, but the node may ask for all of the disambiguating fields too.
 
-3. Having received match target data, the node submits the match target along with a list of identity set nodes to an Identity Bridge with which it has a DSA in the scope of the query it wishes to perform. The identity bridge verifies, encrypts and signs the identity for each DA in the identity set. TODO: does the match target data come from the SP or the bridge in the Verify case? TODO: could/should the IdB run the UI for collection of data? We need to just give the DA the SP identity and then rely on LOGGING to bust them if they are abused. But uh oh, killer question: **how does the audit server know that the DA has lied? can we use canary queries for this?**
+3. Having received match target data, the node submits the match target along with a list of identity set nodes to an Identity Bridge with which it has a DSA in the scope of the query it wishes to perform. The identity bridge verifies, encrypts and signs the identity for each matching node in the identity set. TODO: does the match target data come from the initiating node or the bridge in the Verify case? TODO: could/should the IdB run the UI for collection of data? We need to just give the matching node the initiating node identity and then rely on LOGGING to bust them if they are abused. But uh oh, killer question: **how does the audit server know that the matching node has lied? can we use canary queries for this?**
 
   ```protobuf
   message IdentitySignRequest {
@@ -288,7 +288,7 @@ The transaction-id is the digest of the `Bindings`. TODO: algorithm.
     message SecondWhistle {
       optional bytes query_id = 1;
       //repeated Param inputs   = 3; //TODO: way of expressing this TBC
-      // TODO: how do we ensure this comes from the SP??
+      // TODO: how do we ensure this comes from the initiating node??
     }
     ```
 
