@@ -35,6 +35,11 @@ TODO:
 
 ## Querying
 
+TODO:
+	verbiage for txns and queries
+		a txn is the whole message flow
+		a query is the back and forth between a particular pair of nodes
+
 0. When a node wishes to make a query, it looks up the query in the metadata file and examines the available `Choices` for the query. TODO: who looks at the meteadata? Is it the first node within the Aquae network or is it another client library that is not in the metadata? E.g. there is a random webserver not part of the network communicating with a trusted Aquae node, who looks at the metadata here?
 
     1. The node should, where possible, expose these `choice`s to the user.
