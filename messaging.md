@@ -33,9 +33,9 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
 
 0. When a node wishes to make a query, it looks up the query in the metadata file and examines the available `Choices` for the query. TODO: who looks at the meteadata? Is it the first node within the Aquae network or is it another client library that is not in the metadata? E.g. there is a random webserver not part of the network communicating with a trusted Aquae node, who looks at the metadata here?
 
-    1. The node should, where possible, expose these choices to the user.
+    1. The node should, where possible, expose these `choice`s to the user.
 
-1. When a node has decided from the available `Choices`, it creates a query plan using the metadata file according to the following algorithm.
+1. When a node has decided from the available `Choice`s, it creates a query plan using the metadata file according to the following algorithm.
 
     0. Start with a empty set of nodes which require the subject's identity (the "identity set").
     1. The node looks up which node can directly answer the question it wants answered (the "answering node") by examining the `ImplementingNodes`.
@@ -44,7 +44,7 @@ TODO: This should probably be signed so that intermediate nodes can't cause too 
 
     2. If the chosen node has a `MatchingSpec` requirement, the answering node is added to the identity set.
     3. The node looks up which subsequent questions must be answered to formulate the answer by examining the `requiredQuery` fields.
-    4. Steps 1-3 are repeated until the query has been fully resolved and there are no further required queries. (It is up to the implementation to detect and prevent infinite loops but a correct parse of the Metadata will ensure this.) The node now has a set of nodes which will require the subject identity. TODO: need to resolve the `Choices` of the lower level questions too. How do we present these to the user?
+    4. Steps 1-3 are repeated until the query has been fully resolved and there are no further required queries. (It is up to the implementation to detect and prevent infinite loops but a correct parse of the Metadata will ensure this.) The node now has a set of nodes which will require the subject identity. TODO: need to resolve the `Choice`s of the lower level questions too. How do we present these to the user?
     5. The node looks up the matching requirement entries for the identity set nodes and computes any fields marked as `disambiguating` that are shared by two or more nodes. The node must submit these fields to all matching nodess that support them to ensure matching consistency (these fields are then considered `required`).
     6. The node then has both the fields required and fields that may subsequently be used for disambiguation or confidence-building for matching (the "match target").
 
