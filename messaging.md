@@ -22,6 +22,10 @@ The server and client both need to implement a state machine. Not all Request or
 
 TODO: This should probably be signed so that intermediate nodes can't cause too much trouble and result in a split-brain view of an Aquae transaction.
 
+TODO:
+	patch for messagingerror enum in immediate-next
+		and review of all other messages in the transport enum
+
   ```protobuf
   message MessagingError {
     optional string origin = 1; // Node name of the originating node.
